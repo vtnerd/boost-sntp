@@ -3,7 +3,7 @@
 // ~~~~~~~~~~~~~
 //
 // Copyright (c) 2014 Lee Clagett (code at leeclagett dot com)
-// 
+//
 // Distributed under the Boost Software License, Version 1.0. (See accompanying)
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -16,6 +16,7 @@
 
 namespace sntp
 {
+    // Handles timestamps in
     class timestamp
     {
     public:
@@ -25,19 +26,25 @@ namespace sntp
 	{
 	public:
 
-	    static precision get()
+	    // Indicates microsecond precision
+	    precision() :
+		precision_(-20)
 	    {
-		precision constant;
-		constant.precision_ = -20;
-		return constant;
 	    }
-	    
+
 	private:
 	    std::int8_t precision_;
 	};
 
 	// Retrieve the current timestamp
 	static timestamp now();
+
+	// Default timestamp (0 seconds, 0 fractional)
+	timestamp() :
+	    seconds_(0),
+	    fractional_(0)
+	{
+	}
 
     private:
 
@@ -47,8 +54,8 @@ namespace sntp
 
     static_assert(sizeof(timestamp) == 8, "padding added to timestamp fields");
     static_assert(sizeof(timestamp::precision) == 1, "padding added to precision fields");
-    static_assert(std::is_pod<timestamp>::value, "timestamp must be pod");
-    static_assert(std::is_pod<timestamp::precision>::value, "timestamp precision must be pod");
+//    static_assert(std::is_trivially_copyable<timestamp>::value, "timestamp must be pod");
+//    static_assert(std::is_trivially_copyable<timestamp::precision>::value, "timestamp precision must be pod");
 }
 
 #endif // TIMESTAMP_HPP
