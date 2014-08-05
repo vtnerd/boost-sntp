@@ -28,7 +28,7 @@ namespace sntp
 	    static precision get()
 	    {
 		precision constant;
-		constant.precision_ = -19;
+		constant.precision_ = -20;
 		return constant;
 	    }
 	    
