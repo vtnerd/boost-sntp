@@ -53,7 +53,7 @@ namespace sntp
 	const std::uint32_t seconds_since_epoch = time_since_epoch.total_seconds();
 	const std::uint32_t fractional = 
 	    std::abs(
-		(time_since_epoch - boost::posix_time::seconds(seconds_since_epoch)).total_microseconds());
+		(time_since_epoch - boost::posix_time::seconds(time_since_epoch.total_seconds())).total_microseconds());
 
 	timestamp current_time;
 	current_time.seconds_ = to_ulong(seconds_since_epoch);
