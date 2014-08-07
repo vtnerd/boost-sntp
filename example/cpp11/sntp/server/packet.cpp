@@ -16,49 +16,49 @@ namespace sntp
 {
     namespace
     {
-	void set_flags(std::uint8_t& flags)
-	{
-	}
+        void set_flags(std::uint8_t& flags)
+        {
+        }
 
-	const std::uint8_t primary_reference = 1;
-	const std::uint8_t sixty_four_second_poll_interval = 6;
-	const std::array<std::uint8_t, 4> uncalibrated_local_clock = {'L', 'O', 'C', 'L'};
+        const std::uint8_t primary_reference = 1;
+        const std::uint8_t sixty_four_second_poll_interval = 6;
+        const std::array<std::uint8_t, 4> uncalibrated_local_clock = {'L', 'O', 'C', 'L'};
     }
 
     packet::packet() :
-	flags_(),
-	stratum_(),
-	poll_(),
-	precision_(),
-	delay_(),
-	dispersion_(),
-	identifier_(),
-	reference_(),
-	originate_(),
-	receive_(),
-	transmit_(),
-	key_identifier_(),
-	digest_()
+        flags_(),
+        stratum_(),
+        poll_(),
+        precision_(),
+        delay_(),
+        dispersion_(),
+        identifier_(),
+        reference_(),
+        originate_(),
+        receive_(),
+        transmit_(),
+        key_identifier_(),
+        digest_()
     {
     }
 
     void packet::fill_server_values()
     {
-	receive_ = timestamp::now();
+        receive_ = timestamp::now();
 
-	set_flags(flags_);
-	stratum_ = primary_reference;
-	poll_ = sixty_four_second_poll_interval;
-	precision_ = timestamp::precision();
-	delay_ = 0;
-	dispersion_ = 0;
-	{
-	    static_assert(sizeof(identifier_) == uncalibrated_local_clock.size(), "size mismatch");
-	    boost::range::copy(uncalibrated_local_clock, identifier_.begin());
-	}
-	reference_ = timestamp();
-	originate_ = transmit_;
+        set_flags(flags_);
+        stratum_ = primary_reference;
+        poll_ = sixty_four_second_poll_interval;
+        precision_ = timestamp::precision();
+        delay_ = 0;
+        dispersion_ = 0;
+        {
+            static_assert(sizeof(identifier_) == uncalibrated_local_clock.size(), "size mismatch");
+            boost::range::copy(uncalibrated_local_clock, identifier_.begin());
+        }
+        reference_ = timestamp();
+        originate_ = transmit_;
 
-	transmit_ = timestamp::now();
+        transmit_ = timestamp::now();
     }
 }

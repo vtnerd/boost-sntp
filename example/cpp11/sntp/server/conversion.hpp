@@ -18,7 +18,7 @@ namespace sntp
 {
     std::uint32_t to_ulong(const std::uint32_t convert)
     {
-	return boost::asio::detail::socket_ops::host_to_network_long(convert);
+        return boost::asio::detail::socket_ops::host_to_network_long(convert);
     }
 }
 
