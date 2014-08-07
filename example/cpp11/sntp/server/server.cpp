@@ -52,12 +52,14 @@ namespace
 
         void send_response(const std::shared_ptr<sntp::packet>& response_packet)
         {
-            // make sure to keep shared_ptr to packet active while sending data.
-            response_packet->fill_server_values();
-            socket_.async_send_to(
-                response_packet->get_send_buffer(),
-                remote_endpoint_,
-                [response_packet](const boost::system::error_code&, const std::size_t){});
+            if (response_packet->fill_server_values())
+            {
+                // make sure to keep shared_ptr to packet active while sending data.
+                socket_.async_send_to(
+                    response_packet->get_send_buffer(),
+                    remote_endpoint_,
+                    [response_packet](const boost::system::error_code&, const std::size_t){});
+            }
         }
 
     private:

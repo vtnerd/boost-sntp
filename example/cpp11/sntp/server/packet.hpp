@@ -52,8 +52,9 @@ namespace sntp
             return boost::asio::buffer(this, minimum_packet_size());
         }
 
-        // Update packet with values needed by client
-        void fill_server_values();
+        // Update packet with values needed by client. False is returned
+        // if packet appears to have come from server.
+        bool fill_server_values();
 
     private:
 

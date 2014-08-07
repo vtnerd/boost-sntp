@@ -42,23 +42,30 @@ namespace sntp
     {
     }
 
-    void packet::fill_server_values()
+    bool packet::fill_server_values()
     {
-        receive_ = timestamp::now();
-
-        set_flags(flags_);
-        stratum_ = primary_reference;
-        poll_ = sixty_four_second_poll_interval;
-        precision_ = timestamp::precision();
-        delay_ = 0;
-        dispersion_ = 0;
+        if (!transmit_.from_server())
         {
-            static_assert(sizeof(identifier_) == uncalibrated_local_clock.size(), "size mismatch");
-            boost::range::copy(uncalibrated_local_clock, identifier_.begin());
-        }
-        reference_ = timestamp();
-        originate_ = transmit_;
+            receive_ = timestamp::now();
 
-        transmit_ = timestamp::now();
+            set_flags(flags_);
+            stratum_ = primary_reference;
+            poll_ = sixty_four_second_poll_interval;
+            precision_ = timestamp::precision();
+            delay_ = 0;
+            dispersion_ = 0;
+            {
+                static_assert(sizeof(identifier_) == uncalibrated_local_clock.size(), "size mismatch");
+                boost::range::copy(uncalibrated_local_clock, identifier_.begin());
+            }
+            reference_ = timestamp();
+            originate_ = transmit_;
+
+            transmit_ = timestamp::now();
+
+            return true;
+        }
+
+        return false;
     }
 }
