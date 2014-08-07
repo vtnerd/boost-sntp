@@ -9,8 +9,11 @@
 //
 #include "timestamp.hpp"
 
+#include <array>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <cmath>
+#include <cryptopp/aes.h>
+#include <cryptopp/osrng.h>
 #include <complex>
 #include <limits>
 
@@ -20,6 +23,29 @@ namespace sntp
 {
     namespace
     {
+	// Generates a randm 128-bit value on construction
+	class RandomString
+	{
+	public:
+
+	    RandomString() :
+		random_()
+	    {
+		CryptoPP::AutoSeededX917RNG<CryptoPP::AES> random_generator;
+		random_generator.GenerateBlock(random_.data(), random_.size());
+	    }
+
+	    const std::array<std::uint8_t, 128>& get_random_string() const
+	    {
+		return random_;
+	    }
+
+	private:
+
+	    std::array<std::uint8_t, 128> random_;
+	};
+
+	const RandomString random_data;
 	const double fractional_ratio = std::pow(2, 32) / std::pow(10, 6);
 
 	// total_seconds returns a long, whose type is _at least_ a 32-bit
