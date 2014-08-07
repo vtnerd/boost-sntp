@@ -11,6 +11,7 @@
 #ifndef PACKET_HPP
 #define PACKET_HPP
 
+#include <array>
 #include <boost/asio/buffer.hpp>
 #include <cstdint>
 #include <memory>
@@ -68,7 +69,7 @@ namespace sntp
 
 	std::uint32_t dispersion_;
 
-	std::uint8_t identifier_[4];
+	std::array<std::uint8_t, 4> identifier_;
 
 	timestamp reference_;
 
@@ -80,7 +81,7 @@ namespace sntp
 
 	std::uint32_t key_identifier_;
 
-	std::uint8_t digest_[16];
+	std::array<std::uint8_t, 16> digest_;
     };
 
 //    static_assert(std::is_trivially_copyable<packet>::value, "packet must be pod");
