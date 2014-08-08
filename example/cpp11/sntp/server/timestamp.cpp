@@ -52,12 +52,11 @@ namespace sntp
         const RandomString random_data;
 
         // masks for bits of the timestamp that (in)significant due to accuracy
-        static_assert(timestamp::precision::significant_bits() <= 64, "bad bit value");
-        const std::uint32_t insignificant_mask =
+        const std::uint32_t significant_mask =
             to_ulong(
-                std::numeric_limits<std::uint32_t>::max() >>
-                (32 - timestamp::precision::significant_bits()));
-        const std::uint32_t significant_mask = ~insignificant_mask;
+                std::numeric_limits<std::uint32_t>::max() <<
+                timestamp::precision::significant_bits());
+        const std::uint32_t insignificant_mask = ~significant_mask;
 
         // ratio for converting microseconds to NTP fractional
         const double fractional_ratio = std::pow(2, 32) / std::pow(10, 6);
@@ -89,14 +88,26 @@ namespace sntp
 
         // NTP seconds is modulus operation since 1900. C++ integer conversion
         // rules to an unsigned type are also modulus.
-        const std::uint32_t seconds_since_epoch = time_since_epoch.total_seconds();
-        const std::uint32_t microsecond_precision =
-            std::abs(
-                (time_since_epoch - boost::posix_time::seconds(time_since_epoch.total_seconds())).total_microseconds());
+        std::uint32_t seconds_since_epoch = time_since_epoch.total_seconds();
+        auto microsecond_precision =
+            (time_since_epoch -
+             boost::posix_time::seconds(
+                 time_since_epoch.total_seconds())).total_microseconds();
+
+        if (microsecond_precision < 0)
+        {
+            --seconds_since_epoch;
+            microsecond_precision =
+                (boost::posix_time::seconds(1) -
+                 boost::posix_time::microseconds(
+                     std::abs(microsecond_precision))).total_microseconds();
+        }
 
         timestamp current_time;
         current_time.seconds_ = to_ulong(seconds_since_epoch);
-        current_time.fractional_ = to_ulong(std::uint32_t(microsecond_precision * fractional_ratio));
+        current_time.fractional_ = to_ulong(
+            std::uint32_t(microsecond_precision * fractional_ratio));
+
         current_time.generate_crypto_string();
         return current_time;
     }
@@ -105,7 +116,8 @@ namespace sntp
     {
         timestamp crypto(*this);
         crypto.generate_crypto_string();
-        return crypto.seconds_ == seconds_ && crypto.fractional_ == fractional_;
+        return crypto.seconds_ == seconds_ &&
+            crypto.fractional_ == fractional_;
     }
 
     void timestamp::generate_crypto_string()
