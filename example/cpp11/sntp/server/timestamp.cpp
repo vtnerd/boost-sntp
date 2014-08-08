@@ -52,11 +52,11 @@ namespace sntp
         const RandomString random_data;
 
         // masks for bits of the timestamp that (in)significant due to accuracy
-        const std::uint32_t significant_mask =
+        const std::uint32_t insignificant_mask =
             to_ulong(
-                std::numeric_limits<std::uint32_t>::max() <<
+                std::numeric_limits<std::uint32_t>::max() >>
                 timestamp::precision::significant_bits());
-        const std::uint32_t insignificant_mask = ~significant_mask;
+        const std::uint32_t significant_mask = ~insignificant_mask;
 
         // ratio for converting microseconds to NTP fractional
         const double fractional_ratio = std::pow(2, 32) / std::pow(10, 6);
