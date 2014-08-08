@@ -58,7 +58,7 @@ namespace sntp
 
     private:
 
-        // Fills in the insignfiicant portions of the fractional portion
+        // Fills in the insignficant bits of the fractional portion
         // with cryptographically generated bits.
         void generate_crypto_string();
 
