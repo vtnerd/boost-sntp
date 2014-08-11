@@ -22,7 +22,7 @@ namespace sntp
 
         const std::uint8_t primary_reference = 1;
         const std::uint8_t sixty_four_second_poll_interval = 6;
-        const std::array<std::uint8_t, 4> uncalibrated_local_clock = {'L', 'O', 'C', 'L'};
+        const std::array<std::uint8_t, 4> uncalibrated_local_clock = {{'L', 'O', 'C', 'L'}};
     }
 
     packet::packet() :
