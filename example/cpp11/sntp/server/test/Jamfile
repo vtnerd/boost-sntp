@@ -1,0 +1,5 @@
+import testing ;
+
+test-suite sntp-server :
+	   [ run conversion.cpp ]
+	   ;
