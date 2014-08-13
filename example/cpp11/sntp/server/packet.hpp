@@ -47,7 +47,7 @@ namespace sntp
         }
 
         // Get the buffer for writing
-        auto get_send_buffer()
+        auto get_send_buffer() const
         {
             return boost::asio::buffer(this, minimum_packet_size());
         }
