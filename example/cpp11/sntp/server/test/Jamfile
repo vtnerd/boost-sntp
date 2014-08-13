@@ -1,5 +1,12 @@
 import testing ;
 
+project /sntp-server/tests : requirements
+	<library>/sntp-server//resources
+	:
+	:
+	;
+
 test-suite sntp-server :
 	   [ run conversion.cpp ]
+	   [ run timestamp.cpp ]
 	   ;
