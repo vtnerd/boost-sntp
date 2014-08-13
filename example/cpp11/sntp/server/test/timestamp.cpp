@@ -61,6 +61,7 @@ int test_main(int, char**)
 	const sntp::timestamp time = sntp::timestamp::now();
 	BOOST_CHECK(time.from_server());
 
+	// change crypto bit
 	auto values = get_values(time);
 	values.second = ~(values.first & sntp::to_ulong(0x01));
 
@@ -71,6 +72,22 @@ int test_main(int, char**)
 	BOOST_CHECK(modified_values.first == values.first);
 	BOOST_CHECK((modified_values.second & sntp::to_ulong(0xFFFFFFFE)) == 
 		    (values.second & sntp::to_ulong(0xFFFFFFFE)));
+    }
+    {
+	const sntp::timestamp time = sntp::timestamp::now();
+	BOOST_CHECK(time.from_server());
+
+	// change fractional bit
+	auto values = get_values(time);
+	values.second = ~(values.first & sntp::to_ulong(0x10000000));
+
+	const sntp::timestamp modified_time = make_timestamp(values);
+	const auto modified_values = get_values(modified_time);
+
+	BOOST_CHECK(!modified_time.from_server());
+	BOOST_CHECK(modified_values.first == values.first);
+	BOOST_CHECK((modified_values.second & sntp::to_ulong(0xEFFFFFFF)) == 
+		    (values.second & sntp::to_ulong(0xEFFFFFFF)));
     }
 
     return 0;
