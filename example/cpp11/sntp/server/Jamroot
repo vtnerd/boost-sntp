@@ -2,14 +2,14 @@ lib boost_system ;
 lib cryptopp ;
 
 project sntp-server : requirements
-	<include>.
-	<toolset>gcc:<cxxflags>-std=c++1y
-	<toolset>clang:<cxxflags>-std=c++1y
-	<library>boost_system
-	<library>cryptopp
-	:
-	:
-	;
+        <include>.
+        <toolset>gcc:<cxxflags>-std=c++1y
+        <toolset>clang:<cxxflags>-std=c++1y
+        <library>boost_system
+        <library>cryptopp
+        :
+        :
+        ;
 
 lib resources : packet.cpp timestamp.cpp : <link>static ;
 exe sntp-server : server.cpp resources ;

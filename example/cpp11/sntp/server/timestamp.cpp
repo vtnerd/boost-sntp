@@ -83,9 +83,13 @@ namespace sntp
 
     timestamp timestamp::now()
     {
-        const auto time_since_epoch =
-            boost::posix_time::microsec_clock::universal_time() - epoch;
+        return timestamp(
+            boost::posix_time::microsec_clock::universal_time() - epoch);
+    }
 
+    timestamp::timestamp(
+        const boost::posix_time::time_duration& time_since_epoch)
+    {
         // NTP seconds is modulus operation since 1900. C++ integer conversion
         // rules to an unsigned type are also modulus.
         std::uint32_t seconds_since_epoch = time_since_epoch.total_seconds();
@@ -103,13 +107,11 @@ namespace sntp
                      std::abs(microsecond_precision))).total_microseconds();
         }
 
-        timestamp current_time;
-        current_time.seconds_ = to_ulong(seconds_since_epoch);
-        current_time.fractional_ = to_ulong(
+        seconds_ = to_ulong(seconds_since_epoch);
+        fractional_ = to_ulong(
             std::uint32_t(microsecond_precision * fractional_ratio));
 
-        current_time.generate_crypto_string();
-        return current_time;
+        generate_crypto_string();
     }
 
     bool timestamp::from_server() const
