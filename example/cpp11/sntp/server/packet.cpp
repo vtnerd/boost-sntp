@@ -55,7 +55,9 @@ namespace sntp
             delay_ = 0;
             dispersion_ = 0;
             {
-                static_assert(sizeof(identifier_) == uncalibrated_local_clock.size(), "size mismatch");
+                static_assert(
+                    sizeof(identifier_) == uncalibrated_local_clock.size(),
+                    "size mismatch");
                 boost::range::copy(uncalibrated_local_clock, identifier_.begin());
             }
             reference_ = timestamp();

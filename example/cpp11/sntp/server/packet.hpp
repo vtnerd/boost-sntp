@@ -37,7 +37,7 @@ namespace sntp
             return sizeof(packet) - sizeof(packet::key_identifier_) - sizeof(packet::digest_);
         }
 
-        // zero initialize a NTP packet
+        // zero initialize a NTP packet (precision is marked as -20)
         packet();
 
         // Get the buffer for reading

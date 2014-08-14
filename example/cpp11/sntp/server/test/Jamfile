@@ -8,5 +8,6 @@ project /sntp-server/tests : requirements
 
 test-suite sntp-server :
 	   [ run conversion.cpp ]
+	   [ run packet.cpp ]
 	   [ run timestamp.cpp ]
 	   ;
