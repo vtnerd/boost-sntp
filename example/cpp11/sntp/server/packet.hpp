@@ -25,7 +25,7 @@ namespace sntp
     {
     public:
 
-        // Allocate a zero initialized NTP packet
+        // Allocate a default initialized NTP packet
         static std::shared_ptr<packet> allocate()
         {
             return std::make_shared<packet>();
@@ -37,7 +37,8 @@ namespace sntp
             return sizeof(packet) - sizeof(packet::key_identifier_) - sizeof(packet::digest_);
         }
 
-        // zero initialize a NTP packet (precision is marked as -20)
+        // Initialize a packet with precision -20, in server mode,
+        // with version 4. All other fields are zeroed.
         packet();
 
         // Get the buffer for reading

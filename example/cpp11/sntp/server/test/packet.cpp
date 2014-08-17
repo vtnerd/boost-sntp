@@ -50,6 +50,7 @@ namespace
         {
             test_packet buffer;
             boost::range::fill(buffer, 0xFF);
+            buffer[0] = 0x20; // version must be set
             static_assert(
                 sizeof(test_packet) == buffer.size(),
                 "invalid packet size");
@@ -61,7 +62,8 @@ namespace
     test_packet make_default_test_packet()
     {
         test_packet new_packet = {{0}};
-        new_packet[3] = 0xEC;
+        new_packet[0] = 0x24; // version and server mode
+        new_packet[3] = 0xEC; // precision
         return new_packet;
     }
 

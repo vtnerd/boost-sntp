@@ -16,6 +16,8 @@ namespace sntp
 {
     namespace
     {
+        const std::uint8_t version_mask = 0x38;
+
         const std::uint8_t alarm_condition = 0xC0;
         const std::uint8_t version = 0x20;
         const std::uint8_t server = 0x04;
@@ -26,7 +28,7 @@ namespace sntp
     }
 
     packet::packet() :
-        flags_(),
+        flags_(version | server),
         stratum_(),
         poll_(),
         precision_(),
@@ -44,7 +46,7 @@ namespace sntp
 
     bool packet::fill_server_values()
     {
-        if (!transmit_.from_server())
+        if ((flags_ & version_mask) == version && !transmit_.from_server())
         {
             receive_ = timestamp::now();
 
