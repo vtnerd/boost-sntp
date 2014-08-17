@@ -1,13 +1,14 @@
 import testing ;
 
 project /sntp-server/tests : requirements
-	<library>/sntp-server//resources
-	:
-	:
-	;
+        <library>/sntp-server//resources
+        :
+        :
+        ;
 
+exe sntp-test-client : test_client.cpp ;
 test-suite sntp-server :
-	   [ run conversion.cpp ]
-	   [ run packet.cpp ]
-	   [ run timestamp.cpp ]
-	   ;
+           [ run conversion.cpp ]
+           [ run packet.cpp ]
+           [ run timestamp.cpp ]
+           ;
