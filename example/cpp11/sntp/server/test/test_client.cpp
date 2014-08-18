@@ -3,12 +3,6 @@
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/udp.hpp>
 #include <boost/optional.hpp>
-#include <boost/spirit/include/karma_char.hpp>
-#include <boost/spirit/include/karma_eol.hpp>
-#include <boost/spirit/include/karma_format_attr.hpp>
-#include <boost/spirit/include/karma_sequence.hpp>
-#include <boost/spirit/include/karma_string.hpp>
-#include <boost/spirit/include/karma_uint.hpp>
 #include <boost/spirit/include/qi_eoi.hpp>
 #include <boost/spirit/include/qi_parse.hpp>
 #include <boost/spirit/include/qi_sequence.hpp>
@@ -24,10 +18,6 @@
 
 namespace
 {
-    // default values that are configurable
-    const std::uint16_t default_port = 123;
-    const std::uint32_t default_rounds = 1;
-
     // constants used in test packets
     const std::uint8_t valid_version = 0x20;
     const std::uint8_t invalid_version = 0x18;
@@ -300,19 +290,8 @@ namespace
         }
         else
         {
-            namespace karma = boost::spirit::karma;
-            std::cerr <<
-                karma::format(
-                    (
-                        karma::string << karma::eol << karma::eol <<
-                        karma::string <<
-                        " [ip address] [port = " << karma::ushort_ <<
-                        "] [# of rounds = " << karma::ulong_ << "]"),
-                    error,
-                    argv[0],
-                    default_port,
-                    default_rounds) <<
-                std::endl;
+            std::cerr << error << "\n\n" <<
+                argv[0] << " [ip address] [port] [# of rounds]" << std::endl;
         }
         return EXIT_FAILURE;
     }
@@ -320,36 +299,30 @@ namespace
 
 int main(int argc, const char** argv)
 {
-    if (argc < 2)
+    if (argc != 4)
     {
-        return display_option_error("Missing argument(s)", argc, argv);
+        return display_option_error("Four arguments required", argc, argv);
     }
 
-    std::uint16_t port = default_port;
-    std::uint32_t rounds = default_rounds;
+    std::uint16_t port = 0;
+    std::uint32_t rounds = 0;
 
-    if (argc > 2)
+    if (!boost::spirit::qi::parse(
+            argv[2],
+            argv[2] + strlen(argv[2]),
+            (boost::spirit::qi::ushort_ >> boost::spirit::qi::eoi),
+            port))
     {
-        if (!boost::spirit::qi::parse(
-                argv[2],
-                argv[2] + strlen(argv[2]),
-                (boost::spirit::qi::ushort_ >> boost::spirit::qi::eoi),
-                port))
-        {
             return display_option_error("Invalid port provided", argc, argv);
-        }
     }
 
-    if (argc > 3)
+    if (!boost::spirit::qi::parse(
+            argv[3],
+            argv[3] + strlen(argv[3]),
+            (boost::spirit::qi::ulong_ >> boost::spirit::qi::eoi),
+            rounds))
     {
-        if (!boost::spirit::qi::parse(
-                argv[3],
-                argv[3] + strlen(argv[3]),
-                (boost::spirit::qi::ulong_ >> boost::spirit::qi::eoi),
-                rounds))
-        {
-            return display_option_error("Invalid rounds value", argc, argv);
-        }
+        return display_option_error("Invalid rounds value", argc, argv);
     }
 
     try
