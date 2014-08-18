@@ -10,21 +10,26 @@
 
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/udp.hpp>
+#include <boost/spirit/include/qi_eoi.hpp>
+#include <boost/spirit/include/qi_parse.hpp>
+#include <boost/spirit/include/qi_sequence.hpp>
+#include <boost/spirit/include/qi_uint.hpp>
 #include <cstdint>
+#include <iostream>
 #include <memory>
 
 #include "packet.hpp"
 
 namespace
 {
-    const std::uint16_t ntp_port = 123;
-
     struct ntp_server
     {
     public:
 
-        ntp_server(boost::asio::io_service& service) :
-            socket_(service, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), ntp_port)),
+        ntp_server(boost::asio::io_service& service, const std::uint16_t port) :
+            socket_(
+                service,
+                boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), port)),
             remote_endpoint_()
         {
             wait_for_request();
@@ -67,13 +72,51 @@ namespace
         boost::asio::ip::udp::socket socket_;
         boost::asio::ip::udp::endpoint remote_endpoint_;
     };
+
+    int display_option_error(const char* const error, int argc, const char** argv)
+    {
+        if (argc == 0)
+        {
+            std::cerr << "Bad program" << std::endl;
+        }
+        else
+        {
+            std::cerr << error << "\n\n" <<
+                argv[0] << " [port]" << std::endl;
+        }
+
+        return EXIT_FAILURE;
+    }
 }
 
-int main()
+int main(int argc, const char** argv)
 {
-    boost::asio::io_service service;
-    ntp_server server(service);
-    service.run();
+    if (argc != 2)
+    {
+        return display_option_error("Two arguments required", argc, argv);
+    }
 
-    return 0;
+    std::uint16_t port = 0;
+    if (!boost::spirit::qi::parse(
+            argv[1],
+            argv[1] + strlen(argv[1]),
+            (boost::spirit::qi::ushort_ >> boost::spirit::qi::eoi),
+            port))
+    {
+        return display_option_error("Invalid port provided", argc, argv);
+    }
+
+    try
+    {
+        boost::asio::io_service service;
+        ntp_server server(service, port);
+        service.run();
+    }
+    catch (const std::exception& error)
+    {
+        std::cerr << "Error: " << error.what() << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
 }
