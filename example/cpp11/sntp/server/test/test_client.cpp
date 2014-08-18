@@ -41,10 +41,10 @@ namespace
         {
         }
 
-	const packet_array& get_array() const
-	{
-	    return data_;
-	}
+        const packet_array& get_array() const
+        {
+            return data_;
+        }
 
         packet_array& get_array()
         {
@@ -148,25 +148,25 @@ namespace
             return error && !canceled_operation(error);
         }
 
-	static bool valid_server_packet(const sntp_packet& packet)
-	{
-	    const std::uint32_t originate_seconds = 
-		test::sntp::extract_ulong(
-		    packet.get_array(), 
-		    test::sntp::originate_seconds_offset);
-	    const std::uint32_t originate_fractional = 
-		test::sntp::extract_ulong(
-		    packet.get_array(), 
-		    test::sntp::originate_fractional_offset);
+        static bool valid_server_packet(const sntp_packet& packet)
+        {
+            const std::uint32_t originate_seconds =
+                test::sntp::extract_ulong(
+                    packet.get_array(),
+                    test::sntp::originate_seconds_offset);
+            const std::uint32_t originate_fractional =
+                test::sntp::extract_ulong(
+                    packet.get_array(),
+                    test::sntp::originate_fractional_offset);
 
-	    const std::uint8_t mode = packet.get_array()[0] & mode_mask;
+            const std::uint8_t mode = packet.get_array()[0] & mode_mask;
 
-	    return 
-		mode == server_indicator &&
-		originate_seconds == 0xDEADBEEF &&
-		originate_fractional == 0xBEEFDEAD &&
-		test::sntp::receive_before_transmit(packet.get_array());
-	}
+            return
+                mode == server_indicator &&
+                originate_seconds == 0xDEADBEEF &&
+                originate_fractional == 0xBEEFDEAD &&
+                test::sntp::receive_before_transmit(packet.get_array());
+        }
 
         void reset_timeout()
         {
@@ -218,14 +218,14 @@ namespace
 
                 send_packets[2].get_array()[0] =
                     alarm_condition | valid_version | client_indicator;
-		send_packets[2].get_array()[40] = 0xDE;
-		send_packets[2].get_array()[41] = 0xAD;
-		send_packets[2].get_array()[42] = 0xBE;
-		send_packets[2].get_array()[43] = 0xEF;
-		send_packets[2].get_array()[44] = 0xBE;
-		send_packets[2].get_array()[45] = 0xEF;
-		send_packets[2].get_array()[46] = 0xDE;
-		send_packets[2].get_array()[47] = 0xAD;
+                send_packets[2].get_array()[40] = 0xDE;
+                send_packets[2].get_array()[41] = 0xAD;
+                send_packets[2].get_array()[42] = 0xBE;
+                send_packets[2].get_array()[43] = 0xEF;
+                send_packets[2].get_array()[44] = 0xBE;
+                send_packets[2].get_array()[45] = 0xEF;
+                send_packets[2].get_array()[46] = 0xDE;
+                send_packets[2].get_array()[47] = 0xAD;
 
                 for (std::size_t iteration = 0; iteration < rounds_; ++iteration)
                 {
@@ -255,18 +255,18 @@ namespace
                         }
                         else if (!canceled_operation(error))
                         {
-			    if (!valid_server_packet(this->receive_buffer_))
-			    {
-				this->fail_test("Invalid packet sent by server");
-			    }
-			    else
-			    {
-				++(this->received_count_);
-				
-				// verify that replayed messages are dropped
-				this->queue_packet(this->receive_buffer_);
-				this->receive_message();
-			    }
+                            if (!valid_server_packet(this->receive_buffer_))
+                            {
+                                this->fail_test("Invalid packet sent by server");
+                            }
+                            else
+                            {
+                                ++(this->received_count_);
+
+                                // verify that replayed messages are dropped
+                                this->queue_packet(this->receive_buffer_);
+                                this->receive_message();
+                            }
                         }
                     }));
         }

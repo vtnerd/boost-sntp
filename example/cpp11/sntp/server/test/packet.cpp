@@ -32,16 +32,16 @@ namespace
 
     // Get the range of bytes for the specified timestamp offset. Range must
     // be 8 bytes in length from the offset.
-    boost::iterator_range<const std::uint8_t*> 
+    boost::iterator_range<const std::uint8_t*>
     get_timestamp_range(
-	const boost::iterator_range<const std::uint8_t*>& range, 
-	const std::uint32_t offset)
+        const boost::iterator_range<const std::uint8_t*>& range,
+        const std::uint32_t offset)
     {
-	assert(test::sntp::total_timestamp_length <= range.size());
-	assert(offset < range.size() - test::sntp::total_timestamp_length);
-	return boost::make_iterator_range(
-	    range.begin() + offset, 
-	    range.begin() + offset + test::sntp::total_timestamp_length);
+        assert(test::sntp::total_timestamp_length <= range.size());
+        assert(offset < range.size() - test::sntp::total_timestamp_length);
+        return boost::make_iterator_range(
+            range.begin() + offset,
+            range.begin() + offset + test::sntp::total_timestamp_length);
     }
 
     sntp::packet make_filled_packet()
@@ -92,31 +92,31 @@ namespace
 
         // original receive timestamp should
         // be moved to originate timestamp
-	boost::range::copy(
-	    get_timestamp_range(
-		original_range, test::sntp::transmit_timestamp_offset),
+        boost::range::copy(
+            get_timestamp_range(
+                original_range, test::sntp::transmit_timestamp_offset),
             expected.begin() + test::sntp::originate_timestamp_offset);
 
         // current timestamps are hard to calculate, so
         // copy transmit and receive (but verify transmit
         // is after receive)
         {
-	    BOOST_CHECK(test::sntp::receive_before_transmit(server_range));
+            BOOST_CHECK(test::sntp::receive_before_transmit(server_range));
 
-	    boost::range::copy(
-		get_timestamp_range(
-		    server_range, test::sntp::receive_timestamp_offset),
-		expected.begin() + test::sntp::receive_timestamp_offset);
+            boost::range::copy(
+                get_timestamp_range(
+                    server_range, test::sntp::receive_timestamp_offset),
+                expected.begin() + test::sntp::receive_timestamp_offset);
 
-	    boost::range::copy(
-		get_timestamp_range(
-		    server_range, test::sntp::transmit_timestamp_offset),
-		expected.begin() + test::sntp::transmit_timestamp_offset);
+            boost::range::copy(
+                get_timestamp_range(
+                    server_range, test::sntp::transmit_timestamp_offset),
+                expected.begin() + test::sntp::transmit_timestamp_offset);
 
         }
 
         // copy the bytes that aren't sent out (they are unmodified)
-	std::copy(
+        std::copy(
             original_range.begin() + test::sntp::optional_section_offset,
             original_range.end(),
             expected.begin() + test::sntp::optional_section_offset);
