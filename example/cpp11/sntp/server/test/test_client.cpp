@@ -2,6 +2,7 @@
 #include <boost/asio/deadline_timer.hpp>
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/udp.hpp>
+#include <boost/optional.hpp>
 #include <boost/spirit/include/karma_char.hpp>
 #include <boost/spirit/include/karma_eol.hpp>
 #include <boost/spirit/include/karma_format_attr.hpp>
@@ -87,9 +88,9 @@ namespace
             completion_timer_(service),
             send_queue_(),
             receive_buffer_(),
+            failure_(),
             rounds_(rounds),
-            received_count_(0),
-            failure_(false)
+            received_count_(0)
         {
             reset_timeout();
             socket_.async_connect(
@@ -100,7 +101,7 @@ namespace
                     {
                         if (error)
                         {
-                            this->fail_test();
+                            this->fail_test("Could not connect to server");
                         }
                         else
                         {
@@ -109,11 +110,26 @@ namespace
                     }));
         }
 
-        bool success() const
+        boost::optional<std::string> failure() const
         {
-            return !failure_ &&
-                send_queue_.empty() &&
-                received_count_ == rounds_;
+            if (failure_)
+            {
+                return failure_;
+            }
+
+            if (!send_queue_.empty())
+            {
+                return std::string("Could not send all packets");
+            }
+
+            if (received_count_ != rounds_)
+            {
+                return received_count_ < rounds_ ?
+                    std::string("Received two few packets") :
+                    std::string("Received too many packets");
+            }
+
+            return boost::none;
         }
 
     private:
@@ -154,10 +170,10 @@ namespace
         }
 
         // Marks the test for failure, and cancels all async operations
-        void fail_test()
+        void fail_test(std::string fail_message)
         {
             stop_test();
-            failure_ = true;
+            failure_ = std::move(fail_message);
         }
 
         // Initiate the server test (sending and receive SNTP packets)
@@ -201,13 +217,14 @@ namespace
                     [this]
                     (const boost::system::error_code& error, const std::size_t bytes)
                     {
-                        if (have_server_error(error)
-                            ||
-                            (
-                                !canceled_operation(error) &&
-                                bytes != sntp_packet::packet_size))
+                        if (have_server_error(error))
                         {
-                            this->fail_test();
+                            this->fail_test("Problem receiving message");
+                        }
+                        else if(!canceled_operation(error) &&
+                                bytes != sntp_packet::packet_size)
+                        {
+                            this->fail_test("Invalid packet size received");
                         }
                         else if (!canceled_operation(error))
                         {
@@ -246,10 +263,14 @@ namespace
                         {
                             assert(!this->send_queue_.empty());
 
-                            if (have_server_error(error) ||
-                                bytes != send_queue_.front().get_buffer_size())
+                            if (have_server_error(error))
                             {
-                                this->fail_test();
+                                this->fail_test("Problem sending data");
+                            }
+                            else if (bytes != send_queue_.front().get_buffer_size())
+                            {
+                                this->fail_test(
+                                    "Did not send requested number bytes");
                             }
                             else if(!canceled_operation(error))
                             {
@@ -266,9 +287,9 @@ namespace
         boost::asio::deadline_timer completion_timer_;
         std::queue<sntp_packet> send_queue_;
         sntp_packet receive_buffer_;
+        boost::optional<std::string> failure_;
         const std::uint32_t rounds_;
         std::uint32_t received_count_;
-        bool failure_;
     };
 
     int display_option_error(const char* const error, int argc, const char** argv)
@@ -337,12 +358,14 @@ int main(int argc, const char** argv)
         test_client test_client(argv[1], port, rounds, service);
         service.run();
 
-        if (test_client.success())
+        const boost::optional<std::string> failure = test_client.failure();
+
+        if (!failure)
         {
+            std::cout << "Test Passed" << std::endl;
             return EXIT_SUCCESS;
         }
-
-        std::cerr << "Test failed" << std::endl;
+        std::cerr << "Test Failed: " << *failure << std::endl;
     }
     catch (const std::exception& error)
     {
