@@ -49,7 +49,10 @@ namespace
                         {
                             this->send_response(packet);
                         }
-                        this->wait_for_request();
+                        else
+                        {
+                            this->wait_for_request();
+                        }
                     }));
         }
 
@@ -63,7 +66,15 @@ namespace
                 socket_.async_send_to(
                     response_packet->get_send_buffer(),
                     remote_endpoint_,
-                    [response_packet](const boost::system::error_code&, const std::size_t){});
+                    [this, response_packet]
+                    (const boost::system::error_code&, const std::size_t)
+                    {
+                        this->wait_for_request();
+                    });
+            }
+            else
+            {
+                wait_for_request();
             }
         }
 
