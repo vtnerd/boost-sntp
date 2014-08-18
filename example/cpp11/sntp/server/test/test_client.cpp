@@ -236,7 +236,7 @@ namespace
         {
             if (!send_queue_.empty())
             {
-		reset_timeout();
+                reset_timeout();
                 socket_.async_send(
                     send_queue_.front().get_buffer(),
                     (
