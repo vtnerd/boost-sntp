@@ -213,10 +213,9 @@ namespace
                         {
                             // TODO VERIFY packet
                             ++(this->received_count_);
-                            reset_timeout();
 
                             // verify that replayed messages are dropped
-                            queue_packet(this->receive_buffer_);
+                            this->queue_packet(this->receive_buffer_);
                             this->receive_message();
                         }
                     }));
@@ -237,6 +236,7 @@ namespace
         {
             if (!send_queue_.empty())
             {
+		reset_timeout();
                 socket_.async_send(
                     send_queue_.front().get_buffer(),
                     (
