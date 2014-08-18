@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <boost/asio/detail/socket_ops.hpp>
+#include <boost/range/algorithm/copy.hpp>
 #include <boost/range/algorithm/equal.hpp>
 #include <boost/range/algorithm/fill.hpp>
 #include <boost/range/iterator_range.hpp>
@@ -15,33 +16,32 @@
 #include <cstdint>
 
 #include "packet.hpp"
+#include "packet_util.hpp"
 
 namespace
 {
     using test_packet = std::array<std::uint8_t, sizeof(sntp::packet)>;
 
-    constexpr std::uint32_t ignore_crypto_string(const std::uint32_t value)
-    {
-        return value & 0xFFFFF000;
-    }
-
-    std::uint32_t extract_ulong(
-        const boost::iterator_range<const boost::uint8_t*>& range,
-        const std::uint8_t offset)
-    {
-        assert(sizeof(std::uint32_t) <= range.size());
-        assert(offset < range.size() - sizeof(std::uint32_t));
-
-        std::uint32_t value = 0;
-        std::memcpy(&value, range.begin() + offset, sizeof(value));
-        return boost::asio::detail::socket_ops::network_to_host_long(value);
-    }
 
     auto make_range(const sntp::packet& packet)
     {
         return boost::make_iterator_range(
             reinterpret_cast<const std::uint8_t*>(&packet),
             reinterpret_cast<const std::uint8_t*>(&packet) + sizeof(packet));
+    }
+
+    // Get the range of bytes for the specified timestamp offset. Range must
+    // be 8 bytes in length from the offset.
+    boost::iterator_range<const std::uint8_t*> 
+    get_timestamp_range(
+	const boost::iterator_range<const std::uint8_t*>& range, 
+	const std::uint32_t offset)
+    {
+	assert(test::sntp::total_timestamp_length <= range.size());
+	assert(offset < range.size() - test::sntp::total_timestamp_length);
+	return boost::make_iterator_range(
+	    range.begin() + offset, 
+	    range.begin() + offset + test::sntp::total_timestamp_length);
     }
 
     sntp::packet make_filled_packet()
@@ -92,42 +92,34 @@ namespace
 
         // original receive timestamp should
         // be moved to originate timestamp
-        std::copy(
-            original_range.begin() + 40,
-            original_range.begin() + 48,
-            expected.begin() + 24);
+	boost::range::copy(
+	    get_timestamp_range(
+		original_range, test::sntp::transmit_timestamp_offset),
+            expected.begin() + test::sntp::originate_timestamp_offset);
 
         // current timestamps are hard to calculate, so
         // copy transmit and receive (but verify transmit
         // is after receive)
         {
-            const std::uint32_t receive_seconds =
-                extract_ulong(server_range, 32);
-            const std::uint32_t receive_fractional =
-                extract_ulong(server_range, 36);
-            const std::uint32_t transmit_seconds =
-                extract_ulong(server_range, 40);
-            const std::uint32_t transmit_fractional =
-                extract_ulong(server_range, 44);
+	    BOOST_CHECK(test::sntp::receive_before_transmit(server_range));
 
-            BOOST_CHECK(receive_seconds <= transmit_seconds);
-            BOOST_CHECK(
-                ignore_crypto_string(receive_fractional) <=
-                ignore_crypto_string(transmit_fractional)
-                ||
-                receive_seconds < transmit_seconds);
+	    boost::range::copy(
+		get_timestamp_range(
+		    server_range, test::sntp::receive_timestamp_offset),
+		expected.begin() + test::sntp::receive_timestamp_offset);
 
-            std::copy(
-                server_range.begin() + 32,
-                server_range.begin() + 48,
-                expected.begin() + 32);
+	    boost::range::copy(
+		get_timestamp_range(
+		    server_range, test::sntp::transmit_timestamp_offset),
+		expected.begin() + test::sntp::transmit_timestamp_offset);
+
         }
 
         // copy the bytes that aren't sent out (they are unmodified)
-        std::copy(
-            original_range.begin() + 48,
+	std::copy(
+            original_range.begin() + test::sntp::optional_section_offset,
             original_range.end(),
-            expected.begin() + 48);
+            expected.begin() + test::sntp::optional_section_offset);
 
         return expected;
     }
