@@ -127,7 +127,7 @@ namespace sntp
         std::uint32_t crypto_string = 0;
         fractional_ &= significant_mask;
         {
-            std::array<std::uint8_t, CryptoPP::SHA256::DIGESTSIZE> hash_value;
+            std::array<std::uint8_t, CryptoPP::SHA256::DIGESTSIZE> hash_value = {};
 
             CryptoPP::SHA256 hash;
             hash.Update(
@@ -141,7 +141,9 @@ namespace sntp
                 sizeof(fractional_));
             hash.Final(hash_value.data());
 
-            static_assert(sizeof(crypto_string) <= hash_value.size(), "hash is too small");
+            static_assert(
+                sizeof(crypto_string) <= hash_value.size(),
+                "hash is too small");
             std::memcpy(&crypto_string, hash_value.data(), sizeof(crypto_string));
         }
         crypto_string &= insignificant_mask;
