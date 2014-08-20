@@ -78,7 +78,7 @@ namespace sntp
             boost::gregorian::date(1900, 1, 1),
             boost::posix_time::seconds(std::numeric_limits<std::int32_t>::max()) +
             boost::posix_time::seconds(std::numeric_limits<std::int32_t>::max()) +
-            boost::posix_time::seconds(1));
+            boost::posix_time::seconds(2)); // +1 to equal uint32, another +1 to rollover
     }
 
     timestamp timestamp::now()
