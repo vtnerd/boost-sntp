@@ -17,14 +17,27 @@ namespace sntp
     namespace
     {
         const std::uint8_t version_mask = 0x38;
+        const std::uint8_t mode_mask = 0x07;
 
         const std::uint8_t alarm_condition = 0xC0;
         const std::uint8_t version = 0x20;
+        const std::uint8_t client = 0x03;
         const std::uint8_t server = 0x04;
 
         const std::uint8_t primary_reference = 1;
         const std::uint8_t sixty_four_second_poll_interval = 6;
         const std::array<std::uint8_t, 4> uncalibrated_local_clock = {{'L', 'O', 'C', 'L'}};
+
+        constexpr bool version_check(const std::uint8_t flags)
+        {
+            return (flags & version_mask) == version;
+        }
+
+        constexpr bool mode_check(const std::uint8_t flags)
+        {
+            const std::uint8_t mode = flags & mode_mask;
+            return mode == client || mode == server;
+        }
     }
 
     packet::packet() :
@@ -46,7 +59,9 @@ namespace sntp
 
     bool packet::fill_server_values()
     {
-        if ((flags_ & version_mask) == version && !transmit_.from_server())
+        if (version_check(flags_) &&
+            mode_check(flags_) &&
+            !transmit_.from_server())
         {
             receive_ = timestamp::now();
 

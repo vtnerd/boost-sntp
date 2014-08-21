@@ -3,6 +3,7 @@
 #include <boost/range/algorithm/copy.hpp>
 #include <boost/range/algorithm/equal.hpp>
 #include <boost/range/algorithm/fill.hpp>
+#include <boost/range/counting_range.hpp>
 #include <boost/range/iterator_range.hpp>
 #include <boost/spirit/include/karma_char.hpp>
 #include <boost/spirit/include/karma_eol.hpp>
@@ -22,6 +23,22 @@ namespace
 {
     using test_packet = std::array<std::uint8_t, sizeof(sntp::packet)>;
 
+    const std::uint8_t current_version = 4;
+    const std::uint8_t client_mode = 3;
+    const std::uint8_t server_mode = 4;
+
+
+    auto make_version_range()
+    {
+        // range is [0,8)
+        return boost::counting_range(0, 8);
+    }
+
+    auto make_mode_range()
+    {
+        // range is [0,8)
+        return boost::counting_range(0, 8);
+    }
 
     auto make_range(const sntp::packet& packet)
     {
@@ -44,13 +61,14 @@ namespace
             range.begin() + offset + test::sntp::total_timestamp_length);
     }
 
-    sntp::packet make_filled_packet()
+    sntp::packet make_filled_packet(
+        const std::uint8_t version, const std::uint8_t mode)
     {
         sntp::packet new_packet;
         {
             test_packet buffer;
             boost::range::fill(buffer, 0xFF);
-            buffer[0] = 0x20; // version must be set
+            buffer[0] = (version << 3) | mode;
             static_assert(
                 sizeof(test_packet) == buffer.size(),
                 "invalid packet size");
@@ -178,18 +196,60 @@ int test_main(int, char**)
 
         BOOST_CHECK(!packet.fill_server_values());
     }
+    // try every version
     {
-        sntp::packet packet = make_filled_packet();
+        for (std::uint8_t test_version : make_version_range())
+        {
+            sntp::packet packet =
+                make_filled_packet(test_version, client_mode);
 
-        const sntp::packet original = packet;
-        BOOST_CHECK(packet.fill_server_values());
-        verify_packet(make_test_packet(original, packet), packet);
+            const sntp::packet original = packet;
 
-        BOOST_CHECK(!packet.fill_server_values());
+            if (test_version == current_version)
+            {
+                BOOST_CHECK(packet.fill_server_values());
+                verify_packet(make_test_packet(original, packet), packet);
+            }
+            else
+            {
+                BOOST_CHECK(!packet.fill_server_values());
+                BOOST_CHECK(
+                    boost::range::equal(
+                        make_range(original), make_range(packet)));
+            }
+
+            BOOST_CHECK(!packet.fill_server_values());
+        }
+    }
+    // try every mode
+    {
+        for (std::uint8_t test_mode : make_mode_range())
+        {
+            sntp::packet packet =
+                make_filled_packet(current_version, test_mode);
+
+            const sntp::packet original = packet;
+
+            if (test_mode == server_mode ||
+                test_mode == client_mode)
+            {
+                BOOST_CHECK(packet.fill_server_values());
+                verify_packet(make_test_packet(original, packet), packet);
+            }
+            else
+            {
+                BOOST_CHECK(!packet.fill_server_values());
+                BOOST_CHECK(
+                    boost::range::equal(
+                        make_range(original), make_range(packet)));
+            }
+
+            BOOST_CHECK(!packet.fill_server_values());
+        }
     }
     {
         // alter last byte of crypto string
-        sntp::packet packet = make_filled_packet();
+        sntp::packet packet = make_filled_packet(current_version, server_mode);
         BOOST_CHECK(packet.fill_server_values());
         {
             test_packet bad_crypto_string;
@@ -211,7 +271,7 @@ int test_main(int, char**)
     }
     {
         // alter first byte of fractional
-        sntp::packet packet = make_filled_packet();
+        sntp::packet packet = make_filled_packet(current_version, server_mode);
         BOOST_CHECK(packet.fill_server_values());
         {
             test_packet bad_crypto_string;
